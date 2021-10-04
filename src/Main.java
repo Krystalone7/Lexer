@@ -9,6 +9,7 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) {
         String line = "";
+        boolean flag = true;
         try
         {
             File file = new File("Dollar rate.txt");
@@ -17,11 +18,10 @@ public class Main {
             line  = reader .readLine();
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("File is empty");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Problems with file");
         }
-
         rate = Integer.parseInt(line);
         System.out.println("Enter expression :");
         Scanner in = new Scanner(System.in);
