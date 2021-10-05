@@ -3,34 +3,48 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.*;
-
+import Exceptions.*;
 
 
 public class Main {
     public static void main(String[] args) {
-        String line = "";
-        boolean flag = true;
-        try
-        {
-            File file = new File("Dollar rate.txt");
-            FileReader fileReader = new FileReader(file);
-            BufferedReader reader = new BufferedReader(fileReader);
-            line  = reader .readLine();
-        }
-        catch (FileNotFoundException e) {
-            System.out.println("File is empty");
-        } catch (IOException e) {
-            System.out.println("Problems with file");
-        }
-        rate = Integer.parseInt(line);
-        System.out.println("Enter expression :");
-        Scanner in = new Scanner(System.in);
-        String text = in.nextLine();
-        List<Lex> lexemes = lexAnalyze(text);
+        File input  = new File("Dollar rate.txt");
+        try{
+            Scanner file = new Scanner(input);
+            rate = Double.parseDouble(file.nextLine());
+            System.out.print("Enter expression: ");
+            Scanner in = new Scanner(System.in);
+            String text = in.nextLine();
+            List<Lex> lexemes = lexAnalyze(text);
+            Lex first = lexemes.get(0);
+            char f = ' ';
+            if (first.type == LexemeType.Rub || first.type == LexemeType.Tor){
+                f = 'r';
+            } else if (first.type == LexemeType.Doll || first.type == LexemeType.Tod){
+                f = 'd';
+            }
+            LexemeBuf lexBuf = new LexemeBuf(lexemes);
+            double result = expr(lexBuf);
+            if (f == 'r'){
+                System.out.println(result + "p");
+            } else{
+                System.out.println("$" + result);
+            }
 
-        LexemeBuf lexBuf = new LexemeBuf(lexemes);
-        double result = expr(lexBuf);
-        System.out.println(result);
+        }
+        catch (FileNotFoundException e){
+            System.out.println("The file is missing");
+        }
+        catch (NumberFormatException e){
+            System.out.println("Invalid dollar rate");
+        }
+        catch (WrongWordsException e){
+            System.out.println("Unexpected character in expression");
+        }
+        catch (IncorrectSyntaxException e){
+            System.out.println("Incorrect Syntax");
+        }
+
     }
     //toDollars(5.5p + toRubles($69))
     //5p + toRubles($56)
@@ -44,7 +58,7 @@ public class Main {
     dollF : Doll | "toDollars" '(' plusR ')' ;
      */
 
-    public static double expr(LexemeBuf lexemes){
+    public static double expr(LexemeBuf lexemes) throws IncorrectSyntaxException{
         Lex lex = lexemes.next();
         switch (lex.type){
             case Rub:
@@ -56,11 +70,11 @@ public class Main {
                 lexemes.back();
                 return plusD(lexemes);
             default:
-                throw new RuntimeException("expr Unexpected token " + lex.val + " at " + lexemes.getPos());
+                throw new IncorrectSyntaxException();
 
         }
     }
-    public static double plusR(LexemeBuf lexemes){
+    public static double plusR(LexemeBuf lexemes) throws IncorrectSyntaxException{
         double val = rubF(lexemes);
         while (true){
             Lex lex = lexemes.next();
@@ -78,12 +92,12 @@ public class Main {
                     lexemes.back();
                     return val/rate;
                 default:
-                    throw new RuntimeException("plusR Unexpected token " + lex.val + " at " + lexemes.getPos());
+                    throw new IncorrectSyntaxException();
             }
 
         }
     }
-    public static double plusD(LexemeBuf lexemes){
+    public static double plusD(LexemeBuf lexemes) throws IncorrectSyntaxException{
         double val = dollF(lexemes);
         while (true){
             Lex lex = lexemes.next();
@@ -101,12 +115,12 @@ public class Main {
                     lexemes.back();
                     return val*rate;
                 default:
-                    throw new RuntimeException("plusD Unexpected token " + lex.val + " at " + lexemes.getPos());
+                    throw new IncorrectSyntaxException();
             }
 
         }
     }
-    public static double rubF(LexemeBuf lexemes){
+    public static double rubF(LexemeBuf lexemes) throws IncorrectSyntaxException{
         Lex lex = lexemes.next();
         switch (lex.type){
             case Rub:
@@ -117,17 +131,17 @@ public class Main {
                     double val = plusD(lexemes);
                     lex = lexemes.next();
                     if (lex.type != LexemeType.RBracket){
-                        throw new RuntimeException("Braaaackeets!");
+                        throw new IncorrectSyntaxException();
                     }
                     return val;
                 }else {
-                    throw new RuntimeException("rubF1");
+                    throw new IncorrectSyntaxException();
                 }
             default:
-                throw new RuntimeException("rubF2");
+                throw new IncorrectSyntaxException();
         }
     }
-    public static double dollF(LexemeBuf lexemes){
+    public static double dollF(LexemeBuf lexemes) throws IncorrectSyntaxException{
         Lex lex = lexemes.next();
         switch (lex.type){
             case Doll:
@@ -138,12 +152,12 @@ public class Main {
                     double val = plusR(lexemes);
                     lex = lexemes.next();
                     if (lex.type != LexemeType.RBracket){
-                        throw new RuntimeException("Braaaackeets!");
+                        throw new IncorrectSyntaxException();
                     }
                     return val;
                 }
             default:
-                throw new RuntimeException("dollF");
+                throw new IncorrectSyntaxException();
         }
     }
     public enum LexemeType {
@@ -182,7 +196,7 @@ public class Main {
             return pos;
         }
     }
-    public static List<Lex> lexAnalyze(String text) {
+    public static List<Lex> lexAnalyze(String text) throws WrongWordsException {
         ArrayList<Lex> lexemes = new ArrayList<>();
         int pos = 0;
         HashSet<Character> keys = new HashSet<>();
@@ -262,11 +276,11 @@ public class Main {
                             lexemes.add(new Lex(LexemeType.Tor, sb.substring(0,sb.length()-1).toString()));
                         }
                         else{
-                            throw new RuntimeException("Baaad words");
+                            throw new WrongWordsException();
                         }
                     } else{
                         if (c != ' ') {
-                            throw new RuntimeException("Unexpected character: " + c);
+                            throw new WrongWordsException();
                         }
                         pos++;
                     }
