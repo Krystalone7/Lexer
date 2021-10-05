@@ -1,3 +1,4 @@
+import java.sql.SQLOutput;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
@@ -25,10 +26,11 @@ public class Main {
             }
             LexemeBuf lexBuf = new LexemeBuf(lexemes);
             double result = expr(lexBuf);
+            String res = String.format("%.2f",result);
             if (f == 'r'){
-                System.out.println(result + "p");
+                System.out.print(res+"p");
             } else{
-                System.out.println("$" + result);
+                System.out.print("$"+res);
             }
 
         }
