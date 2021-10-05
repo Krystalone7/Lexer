@@ -37,7 +37,6 @@ public class Main {
             } else{
                 System.out.print("$"+res);
             }
-
         }
         //Обработка исключений
         catch (FileNotFoundException e){

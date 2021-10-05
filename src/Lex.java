@@ -1,9 +1,6 @@
 import Exceptions.WrongWordsException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-
-
 
 public class Lex {
     //Все типы лексем
@@ -36,13 +33,12 @@ public class Lex {
     public static List<Lex> lexAnalyze(String text) throws WrongWordsException {
         ArrayList<Lex> lexemes = new ArrayList<>();
         int pos = 0;
-        //Сет для букв в ключевых словах
-        HashSet<Character> keys = new HashSet<>();
-        keys.add('t'); keys.add('o');keys.add('D');keys.add('l');keys.add('a');
-        keys.add('r');keys.add('s');keys.add('R');keys.add('u');keys.add('b');keys.add('e');
+        //лючевые слова
         String toD = "toDollars";
         String toR = "toRubles";
+        //прохождение по строке
         while (pos< text.length()) {
+            //получение символа
             char c = text.charAt(pos);
             switch (c) {
                 case '(':
@@ -63,11 +59,13 @@ public class Lex {
                     continue;
                 default:
                     char f = '0';
+                    //Проверка на доллар
                     if (c == '$'){
                         f = 'd';
                         pos++;
                         c = text.charAt(pos);
                     }
+                    //Получение числа
                     if (c <= '9' && c >= '0') {
                         StringBuilder sb = new StringBuilder();
                         int flag = 0;
@@ -78,6 +76,7 @@ public class Lex {
                                 break;
                             }
                             c = text.charAt(pos);
+                            //Проверка на максимум одну точку в числе
                             if (c == '.'){
                                 flag ++;
                             }
@@ -85,17 +84,20 @@ public class Lex {
                                 throw new RuntimeException("2 ,,");
                             }
                         } while ((c <= '9' && c >= '0') || c == '.');
-                        if (f == 'd'){
+                        //Запись доллара
+                        if (f == 'd') {
                             lexemes.add(new Lex(LexemeType.Doll, sb.toString()));
                             f = '0';
                             continue;
                         }
+                        //Проверка на рубль
                         char a = text.charAt(pos);
                         pos++;
                         if (a == 'p' || a == 'р'){
                             lexemes.add(new Lex(LexemeType.Rub, sb.toString()));
                             continue;
                         }
+                        //Ключевые слова
                     }else if(toD.contains(Character.toString(c)) || toR.contains(Character.toString(c))) {
                         StringBuilder sb = new StringBuilder();
                         sb.append(c);
@@ -117,6 +119,7 @@ public class Lex {
                             throw new WrongWordsException();
                         }
                     } else{
+                        //Если не пробел - ошибка
                         if (c != ' ') {
                             throw new WrongWordsException();
                         }
@@ -124,6 +127,7 @@ public class Lex {
                     }
             }
         }
+        //Конец строки
         lexemes.add(new Lex(LexemeType.Eof, ""));
         return lexemes;
     }
